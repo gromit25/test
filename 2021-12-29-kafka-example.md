@@ -1,17 +1,17 @@
 ---
 layout: post
-title: "Kafka 서버 Docker 설치 및 Java Publisher/Consumer 구현"
+title: "Kafka 서버 Docker 설치 및 Java Producer/Consumer 구현"
 date: 2021-12-29
 author: 손정모
 
 ---
 
-이번 포스팅에서는 Docker를 이용한 Kafka 서버 구동 및 Java 언어로 간단한 Publisher와 Consumer 프로그램 구현방법에 대해 알아 보겠습니다.
+이번 포스팅에서는 Docker를 이용한 Kafka 서버 구동 및 Java 언어로 간단한 Producer와 Consumer 프로그램 구현방법에 대해 알아 보겠습니다.
 
 ## What is the Kafka?
 
-Kafka는 Publisher-Consumer 구조의 메시지 큐 서비스입니다.    
-Publisher에서 발행된 메시지는 Kafka 서버의 메시지 큐에 저장됩니다.   
+Kafka는 Producer-Consumer 구조의 메시지 큐 서비스입니다.    
+Producer에서 발행된 메시지는 Kafka 서버의 메시지 큐에 저장됩니다.   
 Consumer는 구독 중인 Kafka서버의 메시지 큐에 있는 메시지를 수신 받아 처리할 수 있습니다.   
 Kafka 서버의 메시지 큐는 파일 형태로 저장됩니다.   
 Kafka는 가용성 향상 등을 위해 Local 파일이 아닌 분산 파일 시스템(ZooKeeper)를 사용합니다.   
@@ -19,12 +19,9 @@ Kafka는 가용성 향상 등을 위해 Local 파일이 아닌 분산 파일 시
 
  ![image](1)
 
-### Publisher
-Publisher는 특정 Topic에 메시지를 발행합니다.   
-Topic은 여러개의 Partition을 가지고 있습니다.   
-Publisher가 Topic의 Partition을 지정하여 입력할 수도 있고, Topic만 지정하여 메시지를 발행할 수도 있습니다.    
-
- ![image](2)
+### Producer
+Producer는 특정 Topic에 메시지를 발행합니다. Topic은 여러개의 Partition을 가지고 있습니다.   
+Producer는 Topic의 Partition을 지정하여 입력할 수도 있고, Topic만 지정하여 메시지를 발행할 수도 있습니다.    
 
 ### Consumer
 Consumer는 ConsumerGroup에 Consumer들을 가지는 구조입니다.    
@@ -36,7 +33,7 @@ rebalancing 완료때까지 Consumer에서는 메시지를 처리할 수 없습�
 이런 rebalancing을 최소화하기 위해서는 max.poll.interval.ms 설정값이 적절한지 확인이 필요합니다.     
 또한, heart beat의 타임아웃 시간으로 session.timeout.ms값을 사용하는데, 이를 초과할 시 rebalancing이 발생하기 때문에 주의 깊게 설정하여야 합니다.    
  
- ![image](3)
+ ![image](2)
 
  
 ## Kafka 서버 Docker 실행
@@ -54,14 +51,14 @@ docker 이미지를 따로 실행 시킬 수 있으나, 매번 설정을 해야�
     
 kafka의 설정 중    
     
-KAFKA_ADVERTISED_LISTENERS, KAFKA_ADVERTISED_HOST_NAME는 Java Publisher와 Consumer가 접근할 수 있는 URL로 설정하여야 합니다.    
+* KAFKA_ADVERTISED_LISTENERS, KAFKA_ADVERTISED_HOST_NAME는 Java Producer와 Consumer가 접근할 수 있는 URL로 설정하여야 합니다.    
 만일 'localhost'로 설정하는 경우에는 다른 컴퓨터에서 접근할 수가 없어 제대로 동작하지 않습니다.    
 비동기 통신이라 그런지 오류도 않나지만 메시지를 발행할 수도 수신할 수도 없습니다.    
 
-KAFKA_CREATE_TOPICS는 kafka 서버가 구동될 때 기본적으로 생성되는 topic의 정보 입니다.     
+* KAFKA_CREATE_TOPICS는 kafka 서버가 구동될 때 기본적으로 생성되는 topic의 정보 입니다.     
 형식은 'Topic명:Partition개수:Replica개수'입니다.    
      
-KAFKA_JMX_OPTS, JMX_PORT는 Java Management eXtension 기능을 이용하여 외부에서 모니터링시에 필요합니다.    
+* KAFKA_JMX_OPTS, JMX_PORT는 Java Management eXtension 기능을 이용하여 외부에서 모니터링시에 필요합니다.    
 필요 없으면 삭제해도 상관 없습니다.    
       
 ```
@@ -127,11 +124,13 @@ Java Consumer를 구현하기 위해 Kafka Client 라이브러리를 Maven을 �
 
 ```xml
 <dependencies>
+  ...
   <dependency>
     <groupId>org.apache.kafka</groupId>
     <artifactId>kafka-clients</artifactId>
     <version>2.8.0</version>
   </dependency>
+  ...
 </dependencies>
 ```
 
@@ -174,12 +173,12 @@ try {
 }
 ```
 
-## Java Publisher의 구현
+## Java Producer의 구현
 
-Java Publisher는 Consumer와 거의 유사하게 Kafka 연결정보 설정 및 Consumer 객체 생성부와 Kafka 메시지 송신부로 나누어 보았습니다.     
+Java Producer는 Consumer와 거의 유사하게 Kafka 연결정보 설정 및 Producer 객체 생성부와 Kafka 메시지 송신부로 나누어 구현하였습니다.      
 
 ```java
-// --------- 1. Kafka 연결정보 설정 및 Consumer 객체 생성 --------------
+// --------- 1. Kafka 연결정보 설정 및 Producer 객체 생성 --------------
 Properties props = new Properties();
 props.put("bootstrap.servers", "(kafka 서버 주소):9092");
 props.put("key.serializer", StringSerializer.class.getName());
@@ -216,16 +215,24 @@ try {
 }
 ```
 
-## Java Publisher와 Consumer의 실행
+## Java Producer와 Consumer의 실행
 이클립스 화면에서 실행한 화면 입니다.    
 
-Java Publisher 화면     
-(4)     
+Java Producer 화면     
+ ![image](3)     
 
 Java Consumer 화면     
-(5)     
+ ![image](4)     
      
-이번 포스트에서는 Kafka 서버 구동 및 Java Publisher/Consumer 구현 방법에 대해 알아 보았습니다.     
+이번 포스트에서는 Kafka 서버 구동 및 Java Producer/Consumer 구현 방법에 대해 알아 보았습니다.     
 다음번에는 Kafka Schema Registry를 이용한 데이터 송수신 방법에 대해 알아 보겠습니다.     
      
 감사합니다.     
+
+--------------------------
+## References
+https://soft.plusblog.co.kr/29    
+https://galid1.tistory.com/793    
+https://velog.io/@hyeondev/Apache-Kafka-%EC%9D%98-%EA%B8%B0%EB%B3%B8-%EC%95%84%ED%82%A4%ED%85%8D%EC%B3%90     
+
+
