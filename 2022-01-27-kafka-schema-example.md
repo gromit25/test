@@ -9,7 +9,7 @@ author: 손정모
 이번 포스팅에서는 지난 "Kafka 서버 Docker 설치 및 Java Producer/Consumer 구현"에 이어
 Kafka Schema 서비스에 대해 알아 보겠습니다.    
     
-## What is the Kafka Schema?    
+## What is the Kafka Schema Registry?    
     
 Kafka Schema Registry 서비스는 메시지의 구조를 정의하고 관리하는 기능을 제공합니다.    
     
@@ -17,6 +17,8 @@ Kafka Schema Registry 서비스는 메시지의 구조를 정의하고 관리하
 Producer가 Id, Event, Name을 보내는 중이었으나,    
 변경 요청으로 인해 Name을 firstName, lastName으로 변경하여 Schema가 변경되었습니다.    
 그런데 Consumer 가 수정되지 않은 것이죠.. 심각한 장애가 발생할 수도 있는 상황입니다.    
+이를 해결하기 위해서는 Producer/Consumer간의 메시지 Schema를 관리해야 하는 필요성이 있습니다.
+Kafka에서는 Kafka Schema Registry 서비스를 사용하여 해결합니다.
     
  ![image](1)
     
@@ -239,14 +241,17 @@ repository와 dependency를 추가합니다.
     
 추가 후에 오류가 하나 발생합니다.    
 "<sourceDirectory>${project.basedir}/src/main/avro/</sourceDirectory>" 이것 때문이죠.    
-avro 디렉토리가 없기 때문 입니다.    
+프로젝트에 avro 디렉토리가 없기 때문 입니다.    
     
 ![image](4)    
     
-이제 avro 디렉토리를 생성해 보겠습니다.    
+이제 avro 디렉토리를 생성해 보겠습니다.  
+
+![image](5)    
+  
 생성 후에 "프로젝트명 오른쪽 클릭 > 메뉴에서 Maven > Update Project" 아시죠. ^^    
     
-![image](5)
+![image](6)
     
 오류가 없어 졌네요.    
 이제 준비는 끝났습니다. AVRO 파일을 만들어 보겠습니다.    
@@ -268,27 +273,27 @@ avro 디렉토리가 없기 때문 입니다.
 
 "프로젝트 명 오른쪽 클릭 > Run As > Maven generate-sources"를 선택합니다.    
     
-![image](6)
+![image](7)
     
 아래와 같이 "src/main/java" 에 Movie.java 파일이 생성된 것을 알 수 있습니다.    
     
-![image](7)
+![image](8)
     
 이제 Producer/Consumer에서 참조할 수 있습니다.    
 만일 저와 같이 Procducer/Consumer의 프로젝트를 따로 만들면, 각각 프로젝트에 위의 작업을 따로 해주어야 합니다.    
     
 ## Java Consumer 구현
 Java Consumer는 기존과 연결정보 설정 및 Consumer 객체 생성 부와 Kafka 메시지 수신 및 처리부로 나눌 수 있습니다.    
-※ 현재 예에서 소스 중 "kafka 서버 주소"와 "Kafka schema registry 서버 주소"는 동일한 주소 입니다. 다른 서버에 설치하신 경우에는 각각의 서버 주소를 넣으시면 됩니다.   
+※ 현재 예에서 소스 중 "kafka 서버 IP"와 "Kafka schema registry 서버 IP"는 동일한 IP 입니다. 다른 서버에 설치하신 경우에는 각각의 서버 주소를 넣으시면 됩니다.   
     
 ```java
 // --------- 1. Kafka 연결정보 설정 및 Consumer 객체 생성 --------------
 Properties props = new Properties();
-props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "(kafka 서버 주소):9092");
+props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "(kafka 서버 IP):9092");
 props.put(ConsumerConfig.GROUP_ID_CONFIG, "Movie Consumer");
 props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
-props.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "(kafka schema registry 서버 주소):8085");
+props.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://(kafka schema registry 서버 IP):8085");
 props.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
 
 KafkaConsumer<String, Movie> consumer = new KafkaConsumer<String, Movie>(props);
@@ -327,10 +332,10 @@ Java Producer는 Consumer와 거의 유사하게 Kafka 연결정보 설정 및 P
 ```java
 // --------- 1. Kafka 연결정보 설정 및 Producer 객체 생성 --------------
 Properties props = new Properties();
-props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.10.9:9092");
+props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "(kafka 서버 IP):9092");
 props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-props.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://192.168.10.9:8085");
+props.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://(kafka schema registry 서버 IP):8085");
 
 KafkaProducer<String, GenericRecord> producer = new KafkaProducer<String, GenericRecord>(props);
 
@@ -344,7 +349,7 @@ try {
         .build();
         
     System.out.println("Start Send Message");
-    producer.send(new ProducerRecord<String, GenericRecord>("my-topic-2", "TEST-1", newMovie));
+    producer.send(new ProducerRecord<String, GenericRecord>("my-topic", "TEST-1", newMovie));
     System.out.println("End Send Message");
 
     producer.flush();
@@ -360,10 +365,10 @@ try {
 이클립스 화면에서 실행한 화면 입니다.    
      
 Java Producer 실행 화면     
-![image](8)     
+![image](9)     
      
 Java Consumer 실행 화면     
-![image](9)     
+![image](10)     
      
 이번 포스트에서는 Kafka Schema Registry 서버 구동 및 Java Producer/Consumer 구현 방법에 대해 알아 보았습니다.     
 다음번에는 Kafka 모니터링에 대해 알아 보겠습니다.     
