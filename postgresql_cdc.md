@@ -86,7 +86,7 @@ from psycopg2.extras import LogicalReplicationConnection
 # start_replication, consume_stream는 상관 없음
 # error msg:
 # "CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot. If it was called outside of transaction the snapshot should be cleared here."
-conn = psycopg2.connect('host=192.168.35.66 port=5432 dbname=postgres user=postgres password=password',
+conn = psycopg2.connect('host=111.111.111.111 port=5432 dbname=postgres user=postgres password=password',
                         connection_factory=LogicalReplicationConnection)
 cur = conn.cursor()
 
@@ -102,4 +102,78 @@ def consume(msg):
 
 
 cur.consume_stream(consume)
+```
+
+
+```
+import psycopg2
+from psycopg2.extras import LogicalReplicationConnection
+
+import select
+import threading
+from datetime import datetime
+import time
+
+import json
+
+
+def wait(conn):
+    while True:
+        state = conn.poll()
+        if state == psycopg2.extensions.POLL_OK:
+            break
+        elif state == psycopg2.extensions.POLL_WRITE:
+            select.select([], [conn.fileno()], [])
+        elif state == psycopg2.extensions.POLL_READ:
+            select.select([conn.fileno()], [], [])
+        else:
+            raise psycopg2.OperationalError("poll() returned %s" % state)
+
+
+config_monitoring_slot_name = 'config_monitoring_slot'
+dsn = 'host=192.168.35.66 port=5432 dbname=postgres user=postgres password=password'
+
+aconn = psycopg2.connect(dsn, connection_factory=LogicalReplicationConnection, async_=True)
+wait(aconn)
+acur = aconn.cursor()
+
+# slot을 생성함(메시지는 json 포맷으로 수신함)
+acur.create_replication_slot(config_monitoring_slot_name, output_plugin='wal2json')
+wait(aconn)
+print('slot is created.')
+
+acur.start_replication(slot_name=config_monitoring_slot_name, decode=True)
+wait(aconn)
+print(f'debug: {type(acur)}')
+
+
+is_continue = True
+
+
+def consume(cur):
+    while is_continue:
+
+        msg = cur.read_message()
+
+        if msg is not None:
+            cdc_json = json.loads(msg.payload)
+            print(cdc_json['change'][0]['schema'])
+            print(cdc_json['change'][0]['table'])
+        else:
+            #
+            now = datetime.now()
+            timeout = 10.0 - (now - cur.io_timestamp).total_seconds()
+            sel = select.select([cur], [], [], max(0, timeout))
+            if not any(sel):
+                cur.send_feedback()  # timed out, send a keepalive message
+
+
+t1 = threading.Thread(target=consume, args=(acur,))
+t1.start()
+
+print('start wait')
+time.sleep(10)
+
+print('change is_continue to False')
+#is_continue = False
 ```
