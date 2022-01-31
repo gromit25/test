@@ -105,7 +105,7 @@ cur.consume_stream(consume)
 ```
 
 
-```
+```python
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
 
@@ -131,7 +131,7 @@ def wait(conn):
 
 
 config_monitoring_slot_name = 'config_monitoring_slot'
-dsn = 'host=192.168.35.66 port=5432 dbname=postgres user=postgres password=password'
+dsn = 'host=111.111.111.111 port=5432 dbname=postgres user=postgres password=password'
 
 aconn = psycopg2.connect(dsn, connection_factory=LogicalReplicationConnection, async_=True)
 wait(aconn)
