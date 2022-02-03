@@ -11,7 +11,7 @@ consumer = KafkaConsumer('test-topic',
                          bootstrap_servers=['192.168.10.9:9092'],
                          auto_offset_reset='latest',
                          enable_auto_commit=True,
-                         group_id='my-topic-consumers',
+                         group_id='test-topic-consumers',
                          value_deserializer=lambda x: loads(x.decode('utf-8')),
                          consumer_timeout_ms=1000
                          )
