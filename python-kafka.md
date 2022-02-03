@@ -8,7 +8,7 @@ from kafka import KafkaConsumer
 from json import loads
 
 consumer = KafkaConsumer('test-topic',
-                         bootstrap_servers=['192.168.10.9:9092'],
+                         bootstrap_servers=['192.168.1.9:9092'],
                          auto_offset_reset='latest',
                          enable_auto_commit=True,
                          group_id='test-topic-consumers',
@@ -29,7 +29,7 @@ while True:
 from kafka import KafkaProducer
 from json import dumps
 
-producer = KafkaProducer(bootstrap_servers=['192.168.10.9:9092'],
+producer = KafkaProducer(bootstrap_servers=['192.168.1.9:9092'],
                          value_serializer=lambda x: dumps(x).encode('utf-8')
                          )
 
