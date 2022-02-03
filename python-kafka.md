@@ -36,5 +36,5 @@ producer = KafkaProducer(bootstrap_servers=['192.168.10.9:9092'],
 producer.send('test-topic', value='hello world-1!')
 producer.send('test-topic', value='hello world-2!')
 producer.flush()
-print('complete sending message')
+print('sending message is completed')
 ```
