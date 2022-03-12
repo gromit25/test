@@ -49,24 +49,24 @@ show wal_level;
 test_decoder   
 wal2json    
 
-```
+```sql
 select pg_create_logical_replication_slot('slot_test', 'wal2json');
 ```
     
-```
+```sql
 insert into "TestSchema".app_config values('acqusition', 'from_time', '09:00');
 commit;
 
 select pg_logical_slot_peek_changes('slot_test', NULL, NULL);
 ```
 
-```
+```sql
 select *   
 from pg_replication_slots   
 where slot_name = 'slot_test';   
 ```
     
-```
+```sql
 select FROM pg_drop_replication_slot('slot_test');
 ```
     
