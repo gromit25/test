@@ -59,6 +59,12 @@ commit;
 
 select pg_logical_slot_peek_changes('slot_test', NULL, NULL);
 ```
+
+```
+select *   
+from pg_replication_slots   
+where slot_name = 'slot_test';   
+```
     
 ```
 select FROM pg_drop_replication_slot('slot_test');
