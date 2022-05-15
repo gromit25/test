@@ -16,7 +16,7 @@ pyjnius 라이브러리를 사용하여 Python에서 호출하는 방법입니�
 3. python에서 pyjnius를 호출하기 위한 환경변수 설정     
 4. python에서 PyTest를 호출     
      
-## 1. pyjnius 설치
+### 1. pyjnius 설치
 pyjnius는 아래의 명령어로 간편하게 설치 가능합니다.   
     
 ```
