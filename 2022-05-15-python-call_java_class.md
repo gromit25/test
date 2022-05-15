@@ -58,7 +58,7 @@ javac -d . PyTest.java
 ### 3. python에서 pyjnius를 호출하기 위한 환경변수 설정     
 JAVA가 설치되어 있는 디렉토리를 JAVA_HOME 환경 변수로 설정함     
 ```
-C:\app\test>JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.282-1
+C:\app\test>set JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.282-1
 ```    
     
 ### 4. python에서 PyTest를 호출     
