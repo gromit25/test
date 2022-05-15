@@ -10,7 +10,7 @@ author: 손정모
 pyjnius 라이브러리를 사용하여 Python에서 호출하는 방법입니다.    
 아래의 예제는 PyTest.class를 Python에서 직접 호출하는 것입니다.   
     
-### 순서   
+## 순서   
 1. pyjnius 설치    
 2. PyTest.java 작성 및 컴파일    
 3. python에서 pyjnius를 호출하기 위한 환경변수 설정     
