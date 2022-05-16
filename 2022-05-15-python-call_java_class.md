@@ -63,10 +63,9 @@ C:\app\test>set JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.28
     
 ### 4. python에서 PyTest를 호출     
 pyjnius 라이브러리를 이용하여, python에서 PyTest 호출하고 결과를 화면에 출력함
-     
+   
+test.py   
 ```python
-test.py
-
 # jnius의 JVM 설정
 import jnius_config
 jnius_config.set_classpath(r'C:\app\test')
